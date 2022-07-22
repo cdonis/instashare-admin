@@ -9,6 +9,19 @@ use Illuminate\Http\Response;
 
 class BaseRepository implements EloquentRepositoryInterface
 {
+    /** @var Model */
+    protected $model;
+
+    /**
+     * BaseRepository constructor.
+     *
+     * @param Model $model
+     */
+    public function __construct(Model $model)
+    {
+        $this->model = $model;
+    }
+
     /**
      * Transform some Postgres PDO driver's exceptions error message and code
      * 
@@ -43,19 +56,6 @@ class BaseRepository implements EloquentRepositoryInterface
         }
 
         return $error;
-    }
-
-    /** @var Model */
-    protected $model;
-
-    /**
-     * BaseRepository constructor.
-     *
-     * @param Model $model
-     */
-    public function __construct(Model $model)
-    {
-        $this->model = $model;
     }
 
     /**

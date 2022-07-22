@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\FileUploadRequest;
 use App\Http\Requests\UpdateFileRequest;
 use App\Jobs\StoreFile;
+use App\Jobs\UpdateFileStatus;
+use App\Jobs\ZipFile;
 use App\Repository\FilesRepositoryInterface;
 use Exception;
 use Illuminate\Http\Request;
@@ -62,7 +64,7 @@ class FilesController extends Controller
             }
 
         } else {
-            throw new Exception('Download not available for this file', Response::HTTP_NOT_FOUND);
+            throw new Exception('Download not yet available for this file', Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -81,67 +83,53 @@ class FilesController extends Controller
             'name'      => $uploadedFile->getClientOriginalName(),
             'size'      => $uploadedFile->getSize(),
             'status'    => 'LOADED',
-            'md5'       => md5_file($uploadedFile->path())
+            'md5'       => md5_file($uploadedFile->path()),
+            'user_id'   => auth()->user()->id
         ];
-        $validator = Validator::make($fileData, [
-            'name' => 'required|unique:files',
-            'size' => 'required|numeric',
-            'status' => 'required|string',
-            'md5' => 'string|max:32',
-        ], [], ['name' => 'filename']);
-        
+        $validator = Validator::make(
+            $fileData, 
+            [
+                'name'      => 'required|unique:files',
+                'size'      => 'required|numeric',
+                'status'    => 'required|string',
+                'md5'       => 'string|max:32|unique:files',
+                'user_id'   => 'numeric' 
+            ], 
+            ['md5.unique' => 'Duplicated file not allowed: similar file detected'], 
+            ['name' => 'filename']
+        );
         $fileData = $validator->validated();
-
-        // Check if the file is already uploaded (with a different name: validator ensure unique 'name')
-        $fileWithSameMD5 = $this->filesRepository->findByFields([['md5', $fileData['md5']]]);
-        if ($fileWithSameMD5) {
-            // Set status similar to the existing file
-            $fileData['status'] = $fileWithSameMD5->status;
-        } 
         
         // Store file's metadata in database
         $file = $this->filesRepository->create($fileData);
-        
-        // If file is not already uploaded or uploaded and failed to store during previous upload 
-        if (!$fileWithSameMD5 || ($fileWithSameMD5 && $file->status === 'FAILED')) {
-            // Prevent temporary uploaded file from being deleted when request completes
-            $fileRealPath = $uploadedFile->getRealPath();
-            move_uploaded_file($fileRealPath, $fileRealPath);
 
-            // Asynchronously:
-            Bus::chain([
-                // 1. Store file in the S3 DFS
-                new StoreFile([
-                    'localPath' => $fileRealPath,
-                    'file_id'   => $file->id,
-                    'file_md5'  => $fileData['md5'],
-                    'file_name' => $fileData['name'],
-                ]),
-                // 2. Update file status to "STORED"
-                function (FilesRepositoryInterface $filesRepository) use ($file, $fileRealPath) {
-                    try {
-                        $filesRepository->update(['status' => 'STORED'], $file->id);
-                    } catch (Exception $e) {
-                        // Log error: failed to update file status
-                        Log::error('Failed to update file status', [
-                            'file_id'           => $file->id,
-                            'file_md5'          => $file->md5,
-                            'file_name'         => $file->name,
-                            'status_previous'   => $file->status,
-                            'status_new'        => 'STORED',
-                            'error_code'        => $e->getCode(),
-                            'error_message'     => $e->getMessage()
-                        ]);
-                    }
-                    
-                    // Free server resources: delete temporary file
-                    if (file_exists($fileRealPath))
-                        unlink($fileRealPath);
-                }
-                // 3. Using an external service, compress the file to be ready for download
-                // TODO
-            ])->dispatch();
-        }
+        // Prevent temporary uploaded file from being deleted when request completes
+        $fileRealPath = $uploadedFile->getRealPath();
+        move_uploaded_file($fileRealPath, $fileRealPath);
+
+        //  Asynchronous archive/compression process
+        Bus::chain([
+            // 1. Store file in the S3 DFS
+            new StoreFile([
+                'localPath' => $fileRealPath,
+                'file_id'   => $file->id,
+                'file_md5'  => $fileData['md5'],
+                'file_name' => $fileData['name'],
+            ]),
+            // 2. Update file status to "STORED"
+            new UpdateFileStatus([
+                'file_id'       => $file->id,
+                'file_md5'      => $fileData['md5'],
+                'file_status'   => 'STORED',
+                'file_size'     => null,                    // No need to update file size
+            ]),
+            // 3. Trigger "job message" to compress file using an external service (instashare-zipper)
+            new ZipFile([
+                'file_id'   => $file->id,
+                'file_md5'  => $fileData['md5'],
+                'file_name' => $fileData['name'],
+            ]),
+        ])->dispatch();
 
         return $file;
     }

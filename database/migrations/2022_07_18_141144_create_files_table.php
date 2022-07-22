@@ -27,14 +27,23 @@ return new class extends Migration
                 ->nullable(false)
                 ->comment("File's MD5. Used to identify the file in the DFS (same file with different names is stored once)");
 
-            $table->enum('status', ['LOADED', 'STORED', 'ZIPPED', 'FAILED'])
+            $table->enum('status', ['LOADED', 'STORED', 'ZIPPED'])
                 ->default('LOADED')
                 ->nullable(false)
-                ->comment('Current status for the file parsing process: LOADED | STORED | ZIPPED | FAILED');
+                ->comment('Current status for the file parsing process: LOADED | STORED | ZIPPED');
 
             $table->decimal('size', 19, 0)
                 ->nullable(false)
                 ->comment('Current file size in Bytes');
+
+            $table->bigInteger('user_id')
+                ->nullable(true)
+                ->comment('ID of user uploaded the file. Foreing key of "user" table');
+
+            $table->foreign('user_id')
+                ->references('id')->on('users')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
 
             $table->timestamps();
         });

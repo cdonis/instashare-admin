@@ -26,13 +26,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // TODO in future versions: update statistics as required
+        /*
         Queue::after(function (JobProcessed $event) {
             if ($event->connectionName === 'database') {
-                // Log info: File successfully stored
-                Log::info('A new file has been successfully uploaded and stored');
+                // ex, File uploaded ++
                 // $event->job
                 // $event->job->payload()
             }
         });
+        */
     }
 }

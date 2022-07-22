@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Repository\FilesRepositoryInterface;
 use Exception;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\File;
@@ -38,7 +37,7 @@ class StoreFile implements ShouldQueue
      *
      * @var int
      */
-    public $timeout = 300;
+    public $timeout = 180;
 
     /**
      * Create a new job instance.
@@ -81,31 +80,17 @@ class StoreFile implements ShouldQueue
     public function failed(Throwable $exception)
     {
         // Log error: failed to stored
-        Log::error('Failed to store a file', [
-            'file_id'       => $this->fileData['file_id'],
+        Log::error('Failed to store a file after 3 tries', [
+            'file_record_id' => $this->fileData['file_id'],
             'file_md5'      => $this->fileData['file_md5'],
             'file_name'     => $this->fileData['file_name'],
             'error_code'    => $exception->getCode(),
             'error_message' => $exception->getMessage()
         ]);
 
-        // Update file status in database
-        try {
-            $fileRepository = resolve(FilesRepositoryInterface::class);
-            $fileRepository->update(['status' => 'FAILED'], $this->fileData['file_id']);
-
-        } catch (Exception $e) {
-            // Log error: failed to update file status
-            Log::error('Failed to update file status', [
-                'file_id'       => $this->fileData['file_id'],
-                'file_md5'      => $this->fileData['file_md5'],
-                'file_name'     => $this->fileData['file_name'],
-                'previous_status' => 'LOADED',
-                'new_status'      => 'FAILED',
-                'error_code'    => $e->getCode(),
-                'error_message' => $e->getMessage()
-            ]);
-        }
+        // Remove file's record from database and notify user
+        $fileRepository = resolve(FilesRepositoryInterface::class);
+        $fileRepository->fileFail($this->fileData['file_id']);
 
         // Free server resources: delete temporary file
         if (file_exists($this->fileData['localPath']))
