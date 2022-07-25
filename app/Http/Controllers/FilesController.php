@@ -155,7 +155,7 @@ class FilesController extends Controller
      */
     public function destroy($id)
     {
-        $this->filesRepository->delete($id);
+        $this->filesRepository->removeFile($id);
         return response()->noContent();
     }
 }

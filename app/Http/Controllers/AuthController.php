@@ -20,7 +20,7 @@ class AuthController extends Controller
     public function signup(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
+            'name' => 'required|regex:/^[a-zA-Z@áéíóúÁÉÍÓÚñÑ\s]+$/',
             'email' => 'required|email|unique:users',
             'password' => 'required',
             'c_password' => 'required|same:password',
@@ -32,6 +32,7 @@ class AuthController extends Controller
         $user = User::create($userData);
         $responseData['token'] = $user->createToken('InstaShareSanctum')->plainTextToken;
         $responseData['name'] = $user->name;
+        $responseData['user_id'] = $user->id;
         
         return response()->json($responseData, Response::HTTP_CREATED);
     }
@@ -55,12 +56,30 @@ class AuthController extends Controller
 
             $responseData['token'] = $user->createToken('InstaShareSanctum')->plainTextToken; 
             $responseData['name'] = $user->name;
+            $responseData['user_id'] = $user->id;
 
             return response()->json($responseData, Response::HTTP_OK);
 
         } else { 
-            throw new Exception('Bad credentials.', Response::HTTP_UNAUTHORIZED);
+            throw new Exception('Wrong credentials.', Response::HTTP_UNAUTHORIZED);
         }
+    }
+
+    /**
+     * Get current user information
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getCurrentUser()
+    {
+      try {
+        /** @var User $user */
+        $user = Auth::user();
+        return response()->json($user->only(['id', 'name', 'email']));
+
+      } catch (\Exception $e) {
+        throw new \Exception("Error getting current user information.", Response::HTTP_INTERNAL_SERVER_ERROR, $e);
+      }
     }
 
     /**

@@ -51,7 +51,7 @@ class FilesRepository extends BaseRepository implements FilesRepositoryInterface
             $total = 0;
 
             if (!empty($request->current) && !empty($request->pageSize)) {
-                $paginator = $data->paginate($request->input('pageSize'), '[*]', 'current');
+                $paginator = $data->paginate($request->input('pageSize'), '*', 'current');
                 $items = $paginator->items();
                 $total = $paginator->total();
             } else {
@@ -133,4 +133,18 @@ class FilesRepository extends BaseRepository implements FilesRepositoryInterface
         }
     }
   
+    /**
+     * @inheritDoc
+     */
+    public function removeFile(int $id): void
+    {
+        /** @var File $file */
+        $file = $this->find($id);
+
+        // Remove file from S3 storage
+        Storage::delete($file->getPath());
+
+        // Remove file from database
+        $file->delete();
+    }
 }

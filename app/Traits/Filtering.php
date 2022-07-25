@@ -78,10 +78,12 @@ trait Filtering
     if (\is_array($filterValue)) {                                        // El filtro es un arreglo
       // Si los dos primeros valores del filtro son de tipo fecha, se asume que el atributo a filtrar es de tipo fecha
       if (
-        \DateTime::createFromFormat('d-m-Y', $filterValue[0]) &&
-        \DateTime::createFromFormat('d-m-Y', $filterValue[1])
-      ) {                                                                 // Se asume que el atributo es de tipo fecha
+        \DateTime::createFromFormat('d-m-Y H:i:s', $filterValue[0]) &&
+        \DateTime::createFromFormat('d-m-Y H:i:s', $filterValue[1])
+      ) {     
         // Incluir objeto si el valor del campo está entre las dos fechas especificadas por el filtro
+        $filterValue[0] = \DateTime::createFromFormat('d-m-Y H:i:s', $filterValue[0]);
+        $filterValue[1] = \DateTime::createFromFormat('d-m-Y H:i:s', $filterValue[1]);
         $query->whereBetween($field, $filterValue);
       } else {                                                            // Se asume que el atributo es de cualquier tipo, excepto fecha
         // Incluir objeto si el valor del campo contiene a alguno de los valores del filtro
@@ -95,8 +97,9 @@ trait Filtering
       }
     } else {                                                              // El filtro es un valor simple
       // Si el valor del filtro es de tipo fecha, se asume que el atributo a filtrar es de tipo fecha
-      if (\DateTime::createFromFormat('d-m-Y', $filterValue)) {           // Se asume que el atributo es de tipo fecha
+      if (\DateTime::createFromFormat('d-m-Y H:i:s', $filterValue)) {           // Se asume que el atributo es de tipo fecha
         // Incluir objeto si el valor del campo coincide con la fecha especificada por el filtro
+        $filterValue = \DateTime::createFromFormat('d-m-Y H:i:s', $filterValue);
         $query->whereDate($field, $filterValue);
       } else {                                                            // Se asume que el atributo es de cualquier tipo, excepto fecha
         // Incluir objeto si el valor del campo contiene el valor del filtro

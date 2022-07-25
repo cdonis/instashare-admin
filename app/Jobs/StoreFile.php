@@ -69,6 +69,9 @@ class StoreFile implements ShouldQueue
     {
         // Store file in "/plain" folder with MD5 values as filename
         Storage::putFileAs('plain', new File($this->fileData['localPath']), $this->fileData['file_md5']);
+        if (file_exists($this->fileData['localPath'])) {
+            unlink($this->fileData['localPath']);
+        }
     }
 
     /**

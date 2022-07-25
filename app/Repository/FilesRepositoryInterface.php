@@ -39,5 +39,12 @@ interface FilesRepositoryInterface extends EloquentRepositoryInterface
      * @return void
      */
     public function fileFails(int $id): void;
+
+    /**
+     * Remove file's record from database and corresponding file from S3 file system
+     * 
+     * @param int       $id             ID of failed file
+     */
+    public function removeFile(int $id): void;
   
 }

@@ -26,7 +26,7 @@ class UpdateFileRequest extends FormRequest
     public function rules()
     {
         $fileID = "";
-        $idFromURL = $this->segment(3);       // Get ID from URL
+        $idFromURL = $this->segment(4);       // Get ID from URL
         if (isset($idFromURL)) {
             $filesRepository = resolve(FilesRepositoryInterface::class);  
             $file = $filesRepository->find($idFromURL);

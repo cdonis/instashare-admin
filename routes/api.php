@@ -19,6 +19,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['formatResponse']], function
     Route::group(['prefix' => 'auth'], function () {
         Route::post     ('signup',              [AuthController::class, 'signup']);
         Route::post     ('login',               [AuthController::class, 'login']);
+        Route::get      ('current-user',        [AuthController::class, 'getCurrentUser'])->middleware('auth:sanctum');
         Route::post     ('logout',              [AuthController::class, 'logout'])->middleware('auth:sanctum');
     });
 
