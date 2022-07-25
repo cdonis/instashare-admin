@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FilesController;
+use App\Models\File;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,7 +29,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['formatResponse']], function
         Route::get      ('files/{id}',          [FilesController::class, 'show']);
         Route::get      ('files/{id}/download', [FilesController::class, 'download']);
         Route::post     ('files',               [FilesController::class, 'store']);
-        Route::match    (['put', 'patch'], 'files/{id}', [FilesController::class, 'update']);
-        Route::delete   ('files/{id}',          [FilesController::class, 'destroy']);
+        Route::match    (['put', 'patch'], 'files/{id}', [FilesController::class, 'update'])->middleware('can:update,'.File::class.',id');
+        Route::delete   ('files/{id}',          [FilesController::class, 'destroy'])->middleware('can:delete,'.File::class.',id');
     });
 });
