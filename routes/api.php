@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::group(['prefix' => 'admin', 'middleware' => ['formatResponse']], function() {
+Route::group(['prefix' => 'admin', 'middleware' => ['formatResponse', 'corsSettings']], function() {
     Route::group(['prefix' => 'auth'], function () {
         Route::post     ('signup',              [AuthController::class, 'signup']);
         Route::post     ('login',               [AuthController::class, 'login']);
