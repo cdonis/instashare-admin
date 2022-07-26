@@ -38,7 +38,7 @@ class UpdateFileRequest extends FormRequest
             'name'   => [
                 'max:255', 
                 'string', 
-                'regex:/^[0-9a-zA-ZáéíóúÁÉÍÓÚñÑ._\s]+$/',
+                'regex:/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ.,_\s-]+$/',
                 Rule::unique('files')->ignore($fileID)
             ],
         ];
