@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generado por Microsoft Visio, SVG Export Pro.svg pro_icon -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="0.4375in" height="0.4375in" viewBox="0 0 31.5 31.5"
+		xml:space="preserve" color-interpolation-filters="sRGB" class="st4">
+	<v:documentProperties v:langID="22538" v:viewMarkup="false"/>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:none;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st2 {fill:#000000;font-family:Exo Black;font-size:1.33333em}
+		.st3 {fill:#000000;font-family:Exo Black;font-size:0.75em}
+		.st4 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
+		<title>pro_icon</title>
+		<v:pageProperties v:drawingScale="1" v:pageScale="1" v:drawingUnits="19" v:shadowOffsetX="9" v:shadowOffsetY="-9"/>
+		<g id="shape2-1" v:mID="2" v:groupContext="shape" transform="translate(-1.26562,-8.4375)">
+			<title>Hoja.2</title>
+			<desc>IS</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)"/>
+			<v:textRect cx="11.3906" cy="25.7344" width="22.79" height="11.5313"/>
+			<rect x="0" y="19.9687" width="22.7812" height="11.5313" class="st1"/>
+			<text x="4.18" y="30.53" class="st2" v:langID="22538"><v:paragraph v:horizAlign="1"/><v:tabList/>IS</text>		</g>
+		<g id="shape5-4" v:mID="5" v:groupContext="shape" transform="translate(12.9375,-7.59375)">
+			<title>Hoja.5</title>
+			<desc>3F</desc>
+			<v:textBlock v:margins="rect(4,4,4,4)"/>
+			<v:textRect cx="9.84375" cy="26.7188" width="19.69" height="9.5625"/>
+			<rect x="0" y="21.9375" width="19.6875" height="9.5625" class="st1"/>
+			<text x="4.59" y="29.42" class="st3" v:langID="22538"><v:paragraph v:horizAlign="1"/><v:tabList/>3F</text>		</g>
+	</g>
+</svg>
