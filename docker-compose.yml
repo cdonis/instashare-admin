@@ -1,85 +1,97 @@
-# For more information: https://laravel.com/docs/sail
-version: '3'
+version: '3.8'
 services:
-    laravel.test:
+    instashare-admin:
         build:
-            context: ./vendor/laravel/sail/runtimes/8.1
+            context: .
             dockerfile: Dockerfile
-            args:
-                WWWGROUP: '${WWWGROUP}'
-        image: sail-8.1/app
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        ports:
-            - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-        environment:
-            WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
-            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
-            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+        container_name: instashare-admin
+        command: 'php artisan serve --host=0.0.0.0'
         volumes:
-            - '.:/var/www/html'
+            - .:/app
+        ports:
+            - 8000:8000
         networks:
-            - sail
+            - instashare
         depends_on:
-            - pgsql
+            - rabbitmq
             - minio
-            - redis
-    pgsql:
-        image: 'postgres:14'
-        ports:
-            - '${FORWARD_DB_PORT:-5432}:5432'
-        environment:
-            PGPASSWORD: '${DB_PASSWORD:-secret}'
-            POSTGRES_DB: '${DB_DATABASE}'
-            POSTGRES_USER: '${DB_USERNAME}'
-            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
-        volumes:
-            - 'sail-pgsql:/var/lib/postgresql/data'
-            - './vendor/laravel/sail/database/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
+            - pgsql
+            
+    instashare-admin-dbqueue:
+        build:
+          context: .
+          dockerfile: Dockerfile
+        command: 'php artisan queue:work'
         networks:
-            - sail
-        healthcheck:
-            test: ["CMD", "pg_isready", "-q", "-d", "${DB_DATABASE}", "-U", "${DB_USERNAME}"]
-            retries: 3
-            timeout: 5s
+          - instashare
+        depends_on:
+          - pgsql
+          - minio
+
+    instashare-admin-rbqueue:
+        build:
+          context: .
+          dockerfile: Dockerfile
+        command: 'php artisan queue:work rabbitmq'
+        networks:
+          - instashare
+        depends_on:
+          - pgsql
+          - rabbitmq
+          - minio
+
+    pgsql:
+        image: postgres:14
+        container_name: pgsql_container
+        ports:
+            - 5435:5432
+        environment:
+            PGPASSWORD: instadmin*2022
+            POSTGRES_DB: instashare-admin
+            POSTGRES_USER: instashare
+            POSTGRES_PASSWORD: instadmin*2022
+        volumes:
+            - ./storage/dbdata:/var/lib/postgresql/data
+        networks:
+            - instashare
+
     minio:
         image: 'minio/minio:latest'
+        container_name: minio_container
         ports:
-            - '${FORWARD_MINIO_PORT:-9000}:9000'
-            - '${FORWARD_MINIO_CONSOLE_PORT:-8900}:8900'
+            - 9000:9000
+            - 8900:8900
         environment:
-            MINIO_ROOT_USER: 'sail'
-            MINIO_ROOT_PASSWORD: 'password'
+            MINIO_ROOT_USER: instashare
+            MINIO_ROOT_PASSWORD: instadmin*2022
         volumes:
-            - 'sail-minio:/data/minio'
+            - sail-minio:/data/minio
         networks:
-            - sail
+            - instashare
         command: minio server /data/minio --console-address ":8900"
         healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
             retries: 3
             timeout: 5s
-    redis:
-        image: 'redis:alpine'
+
+    rabbitmq:
+        image: rabbitmq:3.9-management
+        container_name: rabbitmq_container
         ports:
-            - '${FORWARD_REDIS_PORT:-6379}:6379'
+            - 15672:15672
+            - 5672:5672
         volumes:
-            - 'sail-redis:/data'
+            - sail-rabbit:/var/lib/rabbitmq
         networks:
-            - sail
-        healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
-            retries: 3
-            timeout: 5s
+            - instashare
+
 networks:
-    sail:
-        driver: bridge
+    instashare:
+      external:
+        name: instashare
+
 volumes:
-    sail-pgsql:
-        driver: local
     sail-minio:
         driver: local
-    sail-redis:
+    sail-rabbit:
         driver: local
