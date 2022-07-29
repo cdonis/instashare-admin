@@ -22,6 +22,8 @@ services:
           context: .
           dockerfile: Dockerfile
         command: 'php artisan queue:work'
+        volumes:
+            - .:/app
         networks:
           - instashare
         depends_on:
@@ -33,6 +35,8 @@ services:
           context: .
           dockerfile: Dockerfile
         command: 'php artisan queue:work rabbitmq'
+        volumes:
+            - .:/app
         networks:
           - instashare
         depends_on:
@@ -65,14 +69,10 @@ services:
             MINIO_ROOT_USER: instashare
             MINIO_ROOT_PASSWORD: instadmin*2022
         volumes:
-            - sail-minio:/data/minio
+            - ./storage/miniodata:/data/minio
         networks:
             - instashare
         command: minio server /data/minio --console-address ":8900"
-        healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-            retries: 3
-            timeout: 5s
 
     rabbitmq:
         image: rabbitmq:3.9-management
@@ -80,8 +80,6 @@ services:
         ports:
             - 15672:15672
             - 5672:5672
-        volumes:
-            - sail-rabbit:/var/lib/rabbitmq
         networks:
             - instashare
 
@@ -90,8 +88,3 @@ networks:
       external:
         name: instashare
 
-volumes:
-    sail-minio:
-        driver: local
-    sail-rabbit:
-        driver: local

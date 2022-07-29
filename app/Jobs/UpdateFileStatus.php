@@ -33,14 +33,14 @@ class UpdateFileStatus implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 3;
+    //public $tries = 3;
     
     /**
      * The number of seconds the job can run before timing out.
      *
      * @var int
      */
-    public $timeout = 30;
+    //public $timeout = 30;
 
     /**
      * Create a new job instance.
@@ -57,10 +57,12 @@ class UpdateFileStatus implements ShouldQueue
      *
      * @return array
      */
+    /*
     public function backoff()
     {
-        return [3, 10, 20];
+        return [3, 5, 10];
     }
+    */
 
     /**
      * Execute the job. Update status and send notification to user when fails or finishes

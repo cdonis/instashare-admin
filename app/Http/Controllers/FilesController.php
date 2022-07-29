@@ -105,30 +105,32 @@ class FilesController extends Controller
 
         // Prevent temporary uploaded file from being deleted when request completes
         $fileRealPath = $uploadedFile->getRealPath();
-        move_uploaded_file($fileRealPath, $fileRealPath);
+        $tmpFilePath = storage_path("app/{$fileData['md5']}");
+        move_uploaded_file($fileRealPath, $tmpFilePath);
 
         //  Asynchronous archive/compression process
         Bus::chain([
             // 1. Store file in the S3 DFS
             new StoreFile([
-                'localPath' => $fileRealPath,
+                'localPath' => $tmpFilePath,
                 'file_id'   => $file->id,
                 'file_md5'  => $fileData['md5'],
                 'file_name' => $fileData['name'],
             ]),
-            // 2. Update file status to "STORED"
-            new UpdateFileStatus([
-                'file_id'       => $file->id,
-                'file_md5'      => $fileData['md5'],
-                'file_status'   => 'STORED',
-                'file_size'     => null,                    // No need to update file size
-            ]),
-            // 3. Trigger "job message" to compress file using an external service (instashare-zipper)
-            new ZipFile([
-                'file_id'   => $file->id,
-                'file_md5'  => $fileData['md5'],
-                'file_name' => $fileData['name'],
-            ]),
+            // 2. Update status = STORED and trigger file zipper
+            function() use($file, $fileData) {
+                UpdateFileStatus::dispatch([
+                    'file_id'       => $file->id,
+                    'file_md5'      => $fileData['md5'],
+                    'file_status'   => 'STORED',
+                    'file_size'     => null,                    // No need to update file size
+                ]);
+                ZipFile::dispatch([
+                    'file_id'   => $file->id,
+                    'file_md5'  => $fileData['md5'],
+                    'file_name' => $fileData['name'],
+                ]);
+            },
         ])->dispatch();
 
         return $file;

@@ -93,7 +93,7 @@ class StoreFile implements ShouldQueue
 
         // Remove file's record from database and notify user
         $fileRepository = resolve(FilesRepositoryInterface::class);
-        $fileRepository->fileFail($this->fileData['file_id']);
+        $fileRepository->fileFails($this->fileData['file_id']);
 
         // Free server resources: delete temporary file
         if (file_exists($this->fileData['localPath']))
