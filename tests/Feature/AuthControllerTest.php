@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Http\Response;
 use Tests\TestCase;
+use Illuminate\Support\Str;
     
 class AuthControllerTest extends TestCase 
 {
@@ -106,11 +107,11 @@ class AuthControllerTest extends TestCase
     );
 
     $payload = [
-      'email'       => $user['email'],
+      'email'       => $user->email,
       'password'    => 'A123456b*'
     ];
 
-    $this->postJson('api/admin/auth/login', $payload)
+    $response = $this->postJson('api/admin/auth/login', $payload)
       ->assertStatus(Response::HTTP_OK)
       ->assertJsonStructure([
         'token'
@@ -119,6 +120,12 @@ class AuthControllerTest extends TestCase
         'name'      => $user->name,
         'user_id'   => $user->id
       ]);
+
+    $token_id = Str::before($response['token'], '|');
+    $this->assertDatabaseHas('personal_access_tokens', [
+      'id'            => $token_id,
+      'tokenable_id'  => $user->id,
+    ]);
   }
 
   public function testLoginWithWrongPassword()
