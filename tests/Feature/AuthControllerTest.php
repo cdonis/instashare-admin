@@ -197,16 +197,32 @@ class AuthControllerTest extends TestCase
 
   public function testLogoutSuccessful()
   {
+    // Use login instead actingAs() to simulate real use of token
+    $passwd = $this->faker->password;
     $user =  User::create([
       'name'      => "{$this->faker->firstName} {$this->faker->lastName}",
       'email'     => $this->faker->email,
-      'password'  => bcrypt($this->faker->password),
+      'password'  => bcrypt($passwd),
     ]);
 
-    $this->actingAs($user);
+    $payload = [
+      'email'       => $user->email,
+      'password'    => $passwd,
+    ];
 
+    // Do login. Previous test on this feature ensures that returned token is stored in 'personal_access_tokens'
+    $response = $this->postJson('api/admin/auth/login', $payload);
+    $token_id = Str::before($response['token'], '|');
+    
+    // Do logout
     $this->postJson('api/admin/auth/logout')
       ->assertNoContent();
+
+    // Assert that current token was removed from database
+    $this->assertDatabaseMissing('personal_access_tokens', [
+      'id'            => $token_id,
+      'tokenable_id'  => $user->id,
+    ]);
   }
 
 }

@@ -92,18 +92,12 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        // Revoke the token that was used to authenticate the current request 
-        /** @var Model $patObject */
-        $patObject = $user->currentAccessToken();
-        if (method_exists($patObject, 'delete')) {
-          // PersonalAccessToken expected
-          $patObject->delete();                          
-        } else {
-          // Fix to consider testing authentication where Sanctum uses TransientToken instead PersonalAccessToken 
-          // because user is logged in via session/cookie
-          // TransientToken expected 
-          auth()->guard('web')->logout();
-        }
+        // Revoke last issued token 
+        $user->tokens()
+          ->where('tokenable_id', $user->id)
+          ->orderBy('id', 'desc')
+          ->first()
+          ->delete();
 
         return response()->noContent();
     }
